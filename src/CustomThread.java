@@ -4,6 +4,7 @@ public class CustomThread implements Runnable{
 	}
 		
 	public void run(){
+		//test
 		System.out.println("hello world");
 	}
 }
