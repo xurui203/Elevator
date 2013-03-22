@@ -1,19 +1,15 @@
 
-public abstract class AbstractEventBarrier {
+public interface AbstractEventBarrier {
 
 	/** 
 	 * An EventBarrier is created for a specific number of "worker"
  	 * threads (consumers) one "controlling" (producer) thread.
  	 */
-	protected int _numWorkers;
 
 	/**
 	 * At minimum, the constructor should at least take one argument,
  	 * which is the number of worker threads.
  	 */
-	public AbstractEventBarrier(int numWorkers) {
-		_numWorkers = numWorkers;
-	}
 
 	/**
 	 * Method signatures 

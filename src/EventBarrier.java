@@ -1,44 +1,73 @@
+public class EventBarrier implements AbstractEventBarrier {
+    private volatile boolean hasEvent;
+    private volatile int currentWorkers;
+    private int maxWorkers;
 
-public class EventBarrier extends AbstractEventBarrier{
-	private volatile boolean _isSignaled;
-	private int _numWorkers;
-	
-	public EventBarrier(int numWorkers) {
-		super(numWorkers);
-		_isSignaled = false;
-		_numWorkers = numWorkers;
-	}
+    public EventBarrier (int num) {
+        hasEvent = false;
+        maxWorkers = num;
+        currentWorkers = 0;
+    }
 
-	@Override
-	public synchronized void arrive() throws InterruptedException{
-		if (_isSignaled){
-			//no need to wait just continue
-			//numWaiters ++ or numWaiers--
-		}
-		else{
-			//numWaiers ++ or numWaiters--
-			//wait
-			//while(!_isSignaled)
-			//this.wait();
-		}
-	}
+    @Override
+    public synchronized void arrive () {
+        if (hasEvent) {
+            // no need to wait just continue
+            // numWaiters ++ or numWaiers--
+            currentWorkers++;
+            return;
+        }
+        else {
+            // numWaiers ++ or numWaiters--
+            // wait
+            // while(!_isSignaled)
+            // this.wait();
+            currentWorkers++;
+            while (!hasEvent) {
+                try {
+                    this.wait();
+                } catch (InterruptedException e) {
+                    continue;
+                }
+            }
+        }
+    }
 
-	@Override
-	public synchronized void raise() throws InterruptedException {
-		//notifyAll - when you have a consumer/producer trying to depend on your event
-		//wait
-		
-	}
+    @Override
+    public synchronized void raise () {
+        // notifyAll - when you have a consumer/producer trying to depend on your event
+        // wait
+        hasEvent = true;
+        this.notifyAll();
+        while (currentWorkers > 0) {
+            try {
+                this.wait();
+            } catch (InterruptedException e) {
+                continue;
+            }
+        }
+        hasEvent = false;
 
-	@Override
-	public void complete() {
-		//notify
-		//wait
-	}
+    }
 
-	@Override
-	public int waiters() {
-		return _numWorkers;
-	}
+    @Override
+    public void complete () {
+        // notify
+        // wait
+        currentWorkers--;
+        this.notifyAll();
+        while (currentWorkers > 0) {
+            try {
+                this.wait();
+            } catch (InterruptedException e) {
+                continue;
+            }
+        }
+    }
+
+    @Override
+    public int waiters () {
+        return currentWorkers;
+    }
 
 }
