@@ -37,7 +37,7 @@ public abstract class AbstractElevator {
   	 */
 
 	/* Enter the elevator */
-	public abstract boolean Enter(); //complete
+	public abstract boolean Enter(); //complete//3 event barriers per floor, one for exiting, one for going down, one for going up
 	
 	/* Exit the elevator */
 	public abstract void Exit(); //complete
