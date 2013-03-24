@@ -2,7 +2,7 @@
 *.class
 
 # bin directory
-bin/*
+bin*
 
 # eclipse files
 .project
