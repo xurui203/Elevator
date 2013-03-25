@@ -30,7 +30,7 @@ public interface IElevator {
 	public abstract void Exit(); //complete
 
 	/* Request a destination floor once you enter */
- 	public abstract void RequestFloor(int floor); //arrive
+ 	public abstract void RequestFloor(int floor, int direction);
 	
 	/* Other methods as needed goes here */
 }

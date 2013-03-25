@@ -1,5 +1,5 @@
 
-public interface AbstractEventBarrier {
+public interface IEventBarrier {
 
 	/** 
 	 * An EventBarrier is created for a specific number of "worker"
