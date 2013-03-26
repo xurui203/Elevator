@@ -1,3 +1,6 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,16 +12,14 @@ public class Building implements IBuilding {
 
     private int numFloors;
     private int numElevators;
+    private int maxCapacity;
+    private FileWriter myFileWriter;
     private Map<Integer,EventBarrier[]> myEventBarriers;
     private List<RunnableElevator> myElevators;
-//    private EventBarrier myRequestBarrier;
     
     /**
      * myEventBarriers maps integers representing floor numbers to EventBarrier arrays containing 3 EventBarriers,
-     * 1) going up, 2) going down, 3) exiting at that floor
-     * 
-     * myNewRequestEventBarrier is the event barrier that elevators arrive and complete at when waiting for or
-     * delivering passengers.
+     * 1) going up, 2) going down, 3) exiting at that floor 
      */
     
     public static final int ACTION_UP = 0;
@@ -31,20 +32,26 @@ public class Building implements IBuilding {
         }
     }
     
-    public Building (int numFloors, int numElevators) {
+    public void setWriter(FileWriter writer) {
+        myFileWriter = writer;        
+    }
+    
+    public Building (FileWriter writer, int numFloors, int numElevators, int maxCapacity) {
         this.numFloors = numFloors;
         this.numElevators = numElevators;
+        this.maxCapacity = maxCapacity;
+        setWriter(writer);
         myEventBarriers = new HashMap<Integer,EventBarrier[]>();
         myElevators = new ArrayList<RunnableElevator>();
-//        myRequestBarrier = new EventBarrier(0);
-        int currentId = 1;
+        int currentId = 0;
         for (int i=0; i<numFloors; i++) {
             myEventBarriers.put(i, new EventBarrier[]{new EventBarrier(currentId), new EventBarrier(currentId+1), new EventBarrier(currentId+2)});
             currentId += 3;
         }
         
         for (int i=0; i<numElevators; i++) {
-            RunnableElevator el = new RunnableElevator(this, numFloors, i, ElevatorConstants.ELEVATOR_MAX_OCCUPANCY);
+            RunnableElevator el = new RunnableElevator(this, numFloors, i, maxCapacity);
+            el.setWriter(myFileWriter);
             myElevators.add(el);
             el.runThread();
         }
@@ -58,7 +65,6 @@ public class Building implements IBuilding {
         }
         RunnableElevator el = assignElevator(fromFloor, RunnableElevator.DIRECTION_UP);
         print("****Building: CallUp -- assigned elevator %d to callup from floor %d\n", el.getId(), fromFloor);
-//        el.runThread();
         return el;
         
     }
@@ -70,16 +76,8 @@ public class Building implements IBuilding {
         }
         RunnableElevator el = assignElevator(fromFloor, RunnableElevator.DIRECTION_DOWN);
         print("****Building: CallDown -- assigned elevator %d to calldown from floor %d\n", el.getId(), fromFloor);
-//        el.runThread();
         return el;
-    }
-    
-//    public void signalNewRequest() {
-//        print("****Building: signalNewRequest -- raising at request barrier %d with %d waiters\n", myRequestBarrier.getId(),
-//              myRequestBarrier.waiters());
-//        myRequestBarrier.raise();
-//        print("****Building: signalNewRequest -- completing at request barrier %d\n", myRequestBarrier.getId());
-//    }
+    }    
     
     public EventBarrier getBarrierForFloorAndAction(int floor, int action) {
         Map<Integer,EventBarrier[]> barriers = getBarriers();
@@ -90,10 +88,6 @@ public class Building implements IBuilding {
         EventBarrier result = array[action];
         return result;
     }
-    
-//    public EventBarrier getRequestEventBarrier() {
-//        return myRequestBarrier;
-//    }
     
     public int getNumFloors() {
         return numFloors;
@@ -122,24 +116,20 @@ public class Building implements IBuilding {
         List<RunnableElevator> elevators = getElevators();
         for (RunnableElevator elevator : elevators) {
             if (elevator.getDirection() == RunnableElevator.DIRECTION_IDLE) {
-//                elevator.addFloor(floor, direction);
-                return elevator;
-            }
-            if (elevator.getFloor() < floor && elevator.getDirection() == RunnableElevator.DIRECTION_UP) {
-//                elevator.addFloor(floor, direction);
                 return elevator;
             }
         }
         for (RunnableElevator elevator : elevators) {
+            if (elevator.getFloor() < floor && elevator.getDirection() == RunnableElevator.DIRECTION_UP) {
+                return elevator;
+            }
             if (elevator.getFloor() > floor && elevator.getDirection() == RunnableElevator.DIRECTION_DOWN) {
-//                elevator.addFloor(floor, direction);
                 return elevator;
             }
         }
         Random random = new Random();
         double elId = Math.floor(elevators.size() * random.nextFloat());
         RunnableElevator el = elevators.get((int) elId);
-//        el.addFloor(floor, direction);
         return el;        
     }
 

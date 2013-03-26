@@ -1,3 +1,6 @@
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -6,14 +9,33 @@ public class RunnableRider implements Runnable {
 
     private Building myBuilding;
     private RunnableElevator myElevator;
-//    private Thread myThread;
     private int myFrom;
     private int myTo;
     private int myId;
     
+    private FileWriter myFileWriter;
+    
     public void print(String format, Object... args) {
         if (ElevatorConstants.PRINT_RIDER) {
             System.out.printf(format, args);
+        }
+    }
+    
+    public void setWriter(FileWriter writer) {
+        myFileWriter = writer;
+    }
+    
+    /**
+     * Writes to output file.
+     */
+    public void write(String string) {
+        synchronized (myFileWriter) {
+            try {
+                myFileWriter.write(string);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
     
@@ -24,7 +46,6 @@ public class RunnableRider implements Runnable {
         myTo = to;
         myId = id;
         print("******RunnableRider: rider %d created, traveling from floor %d to floor %d\n", myId, myFrom, myTo);
-//        myThread = new Thread(this);
     }
     
     public void runThread() {
@@ -59,10 +80,12 @@ public class RunnableRider implements Runnable {
         
         // get the elevator that will be assigned to our request
         if (action == Building.ACTION_DOWN) {
+            write("R" + myId + " pushes D" + myFrom + "\n");
             print("******RunnableRider: run -- rider %d requesting a calldown from floor %d\n", myId, myFrom);
             myElevator = myBuilding.CallDown(myFrom);
             direction = RunnableElevator.DIRECTION_DOWN;
         } else {
+            write("R" + myId + " pushes U" + myFrom + "\n");
             print("******RunnableRider: run -- rider %d requesting a callup from floor %d\n", myId, myFrom);
             myElevator = myBuilding.CallUp(myFrom);
             direction = RunnableElevator.DIRECTION_UP;
@@ -127,6 +150,8 @@ public class RunnableRider implements Runnable {
             
         }
         
+        write("R" + myId + " enters E" + myElevator.getId() + " on F" + myFrom + "\n");
+        
         /**
          * Synchronize this block to make sure riders arrive at the appropriate exit barrier immediately after
          * requesting a floor.
@@ -134,6 +159,7 @@ public class RunnableRider implements Runnable {
         synchronized (myElevator) {
             
             // request a floor
+            write("R" + myId + " pushes E" + myElevator.getId() + "B" + myTo + "\n");
             print("******RunnableRider: run -- rider %d in elevator %d requesting floor %d\n", myId, myElevator.getId(), myTo);
             myElevator.RequestFloor(myTo, direction);
             
@@ -163,6 +189,8 @@ public class RunnableRider implements Runnable {
             myElevator.Exit();                    
         
         }
+        
+        write("R" + myId + " exits E" + myElevator.getId() + " on F" + myTo + "\n");
         
         // complete the exit barrier action
 //        print("******RunnableRider: run -- rider %d completing at toBarrier %d\n", myId, toBarrier.getId());

@@ -7,4 +7,10 @@ bin*
 # eclipse files
 .project
 .classpath
-.settings/*
+.settings/
+
+# READMEs
+README*
+
+# I/O files
+data/*

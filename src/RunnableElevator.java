@@ -1,3 +1,5 @@
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.PriorityQueue;
 
@@ -11,9 +13,11 @@ public class RunnableElevator implements Runnable, IElevator {
     private int myDirection;
     private int myFloor;
     private Thread myThread;
-    private Building myBuilding;
+    private Building myBuilding;    
     private PriorityQueue<ElevatorCall> myUpFloors;
     private PriorityQueue<ElevatorCall> myDownFloors;
+    
+    private FileWriter myFileWriter;
     
     public static final int DIRECTION_IDLE = 0;
     public static final int DIRECTION_UP = 1;
@@ -23,6 +27,24 @@ public class RunnableElevator implements Runnable, IElevator {
     public void print(String format, Object... args) {
         if (ElevatorConstants.PRINT_ELEVATOR) {
             System.out.printf(format, args);
+        }
+    }
+    
+    public void setWriter(FileWriter writer) {
+        myFileWriter = writer;
+    }
+    
+    /**
+     * Writes to output file.
+     */
+    public void write(String string) {
+        synchronized (myFileWriter) {
+            try {
+                myFileWriter.write(string);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
     
@@ -162,8 +184,10 @@ public class RunnableElevator implements Runnable, IElevator {
         String direction;
         if (myDirection == RunnableElevator.DIRECTION_DOWN){
             direction = "down";
+            write("E" + myId + " moves down from F" + myFloor + " to F" + nextCall.getFloor() + "\n");
         } else {
             direction = "up";
+            write("E" + myId + " moves up from F" + myFloor + " to F" + nextCall.getFloor() + "\n");            
         }
         print("****RunnableElevator: VisitFloor -- elevator %d moving %s from floor %d to floor %d\n", myId, 
                           direction, myFloor, nextCall.getFloor());
@@ -177,6 +201,7 @@ public class RunnableElevator implements Runnable, IElevator {
      */
     @Override
     public void OpenDoors () {
+        write("E" + myId + " on F" + myFloor + " opens\n");
         print("****RunnableElevator: OpenDoors -- elevator %d opening doors at floor %d\n", myId, myFloor);
         EventBarrier exitBarrier = myBuilding.getBarrierForFloorAndAction(myFloor, Building.ACTION_EXIT);
 //        print("****RunnableElevator: OpenDoors -- elevator %d raising exit barrier %d at floor %d\n", myId,
@@ -205,6 +230,7 @@ public class RunnableElevator implements Runnable, IElevator {
 
     @Override
     public void CloseDoors () {
+        write("E" + myId + " on F" + myFloor + " closes\n");        
         print("****RunnableElevator: CloseDoors -- elevator %d closing doors at floor %d\n", myId, myFloor);        
     }
 
